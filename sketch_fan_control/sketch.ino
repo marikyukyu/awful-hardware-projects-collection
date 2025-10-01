@@ -12,8 +12,14 @@
   #error "This sketch takes over TCA0 - please use a different timer for millis"
 #endif
 
+// fmap(percent, 0, 1023, 639, 0);
 float fmap(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+float fmapAlt(float x)
+{
+  return (x * 639) / 1023;
 }
 
 void setupTimer()
@@ -25,17 +31,11 @@ void setupTimer()
   TCA0.SPLIT.CTRLA = 0; //disable TCA0 and set divider to 1
   TCA0.SPLIT.CTRLESET= TCA_SPLIT_CMD_RESET_gc|0x03; //set CMD to RESET to do a hard reset of TCA0.
 
-  delay(10); // safety. technically needless.
+  delay(10);
 
   TCA0.SINGLE.PERBUF = 639; // period. 25kHz, for 16 MHz F_CPU
   TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_SINGLESLOPE_gc | (1 << TCA_SINGLE_CMP2EN_bp);
   TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV1_gc | (1 << TCA_SINGLE_ENABLE_bp);
-}
-
-void setupADC()
-{
-  pinMode(PIN_PA4, INPUT);
-  analogReference(VDD);
 }
 
 void setTimerPwm(short percent)
@@ -44,21 +44,18 @@ void setTimerPwm(short percent)
   TCA0.SINGLE.CMP2 = value;
 }
 
-short readDivider()
-{
-  return analogRead(PIN_PA4);
-}
-
 void setup() {
   // put your setup code here, to run once:
 
   setupTimer();
-  setupADC();
+  
+  pinMode(PIN_PA4, INPUT);
+  analogReference(VDD);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
-  setTimerPwm(readDivider());
+  setTimerPwm(analogRead(PIN_PA4));
 
 }
